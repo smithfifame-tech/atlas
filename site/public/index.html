@@ -73,7 +73,8 @@
     .card p { margin: 0 0 14px; color: var(--muted); font-size: 15px; }
     .card code { display: block; font-family: var(--mono); font-size: 12.5px; color: #cfcbc2; background: #0c0e11; border-radius: 8px; padding: 9px 11px; border: 1px solid #ffffff08; }
 
-    .loop { display: grid; grid-template-columns: 1.1fr 1fr; gap: 48px; align-items: center; }
+    .loop .steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; }
+    .loop .steps li::after { display: none; }
     .steps { list-style: none; margin: 0; padding: 0; counter-reset: s; }
     .steps li { counter-increment: s; position: relative; padding: 0 0 26px 54px; }
     .steps li::before { content: counter(s); position: absolute; left: 0; top: -2px; width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--line); display: grid; place-items: center; font-family: var(--mono); font-size: 13px; color: var(--accent); background: var(--bg-2); }
@@ -113,11 +114,12 @@
 
     @media (max-width: 900px) {
       .grid, .modes, .req { grid-template-columns: 1fr 1fr; }
-      .loop, .install { grid-template-columns: 1fr; }
+      .install { grid-template-columns: 1fr; }
+      .loop .steps { grid-template-columns: 1fr 1fr; }
       nav .links a:not(.btn) { display: none; }
     }
     @media (max-width: 600px) {
-      .grid, .modes, .req, .guards { grid-template-columns: 1fr; }
+      .grid, .modes, .req, .guards, .loop .steps { grid-template-columns: 1fr; }
       .hero { padding-top: 56px; }
       section { padding-top: 72px; }
       .final { padding: 44px 20px; }
@@ -151,7 +153,7 @@
     <p class="note">Gratuit · 64 Ko · nécessite une clé API Anthropic</p>
     <div class="shot">
       <div class="shot-bar"><i></i><i></i><i></i></div>
-      <img src="/apercu-accueil.webp" alt="Écran d'accueil d'Atlas : « Que veux-tu que je fasse ? » avec des suggestions de tâches" width="1400" height="900">
+      <img src="/apercu-conversation.webp" alt="Atlas exécute une commande, puis demande l'autorisation avant de supprimer un dossier" width="1100" height="707">
     </div>
   </div>
 </header>
@@ -187,10 +189,6 @@
         <li><b>Il agit et contrôle</b><span>Il relit le fichier, relance le programme, prend une capture d'écran.</span></li>
         <li><b>Il te rend compte</b><span>Ce qui a été fait, où se trouve le résultat, ce qui reste à faire.</span></li>
       </ol>
-    </div>
-    <div class="shot">
-      <div class="shot-bar"><i></i><i></i><i></i></div>
-      <img src="/apercu-conversation.webp" alt="Atlas exécute une commande, puis demande l'autorisation avant de supprimer un dossier" width="1400" height="900" loading="lazy">
     </div>
   </div>
 </section>
