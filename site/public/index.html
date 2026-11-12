@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Atlas · l'assistant IA qui pilote ton PC</title>
+  <meta name="description" content="Atlas est un assistant IA personnel qui travaille sur ton ordinateur : terminal, fichiers, écran, web et applications connectées. Gratuit et open source, propulsé par Claude.">
+  <meta property="og:title" content="Atlas · l'assistant IA qui pilote ton PC">
+  <meta property="og:description" content="Un assistant IA qui agit vraiment sur ton ordinateur, jusqu'à ce que le travail soit fait.">
+  <meta property="og:image" content="/apercu-conversation.webp">
+  <meta name="theme-color" content="#111317">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='13' fill='%23e8a54b'/><circle cx='16' cy='16' r='5' fill='%2314161a'/></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,650&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #111317; --bg-2: #171a1f; --bg-3: #1e2228; --line: #2a2f37;
+      --text: #ece8e0; --muted: #9c988f; --accent: #e8a54b; --accent-ink: #1a1408;
+      --ok: #6fbf8a; --bad: #e26d5c;
+      --display: "Fraunces", Georgia, serif;
+      --body: "Inter", "Segoe UI", system-ui, sans-serif;
+      --mono: "JetBrains Mono", Consolas, monospace;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.6 var(--body); -webkit-font-smoothing: antialiased; }
+    a { color: inherit; }
+    .wrap { width: min(1120px, 100% - 32px); margin: 0 auto; }
+
+    /* navigation */
+    nav { position: sticky; top: 0; z-index: 10; background: #111317e6; backdrop-filter: blur(10px); border-bottom: 1px solid #ffffff0d; }
+    nav .wrap { display: flex; align-items: center; justify-content: space-between; height: 62px; }
+    .logo { display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 17px; text-decoration: none; }
+    .mark { width: 22px; height: 22px; border-radius: 50%; background: radial-gradient(circle, var(--bg) 0 28%, var(--accent) 30%); box-shadow: 0 0 18px #e8a54b55; flex: none; }
+    nav .links { display: flex; gap: 24px; align-items: center; font-size: 14px; color: var(--muted); }
+    nav .links a { text-decoration: none; }
+    nav .links a:hover { color: var(--text); }
+    .btn { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; font-weight: 600; border-radius: 12px; padding: 13px 22px; transition: transform .15s, box-shadow .15s; }
+    .btn-primary { background: var(--accent); color: var(--accent-ink); box-shadow: 0 8px 30px -10px #e8a54b88; }
+    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 12px 34px -10px #e8a54bbb; }
+    .btn-ghost { border: 1px solid var(--line); color: var(--text); }
+    .btn-ghost:hover { border-color: var(--muted); }
+    .btn-sm { padding: 8px 14px; font-size: 14px; border-radius: 10px; }
+
+    /* hero */
+    .hero { padding: 88px 0 40px; text-align: center; position: relative; }
+    .hero::before { content: ""; position: absolute; inset: -80px 0 auto; height: 520px; background: radial-gradient(ellipse 50% 60% at 50% 30%, #e8a54b1f, transparent 70%); pointer-events: none; }
+    .eyebrow { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); border: 1px solid var(--line); border-radius: 99px; padding: 5px 14px; margin-bottom: 26px; background: var(--bg-2); }
+    .eyebrow b { color: var(--accent); font-weight: 600; }
+    h1 { font-family: var(--display); font-weight: 650; font-size: clamp(40px, 7vw, 76px); line-height: 1.02; letter-spacing: -1.5px; margin: 0 auto 22px; max-width: 900px; }
+    h1 em { font-style: italic; color: var(--accent); font-weight: 500; }
+    .lead { font-size: clamp(17px, 2.2vw, 20px); color: var(--muted); max-width: 640px; margin: 0 auto 34px; }
+    .cta { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+    .note { font-size: 13px; color: var(--muted); margin-top: 16px; }
+
+    .shot { margin: 64px auto 0; max-width: 1040px; border-radius: 16px; border: 1px solid var(--line); overflow: hidden; box-shadow: 0 40px 120px -40px #000, 0 0 0 1px #ffffff08; background: var(--bg-2); }
+    .shot-bar { display: flex; gap: 7px; padding: 12px 14px; border-bottom: 1px solid var(--line); }
+    .shot-bar i { width: 11px; height: 11px; border-radius: 50%; background: #2c3139; }
+    .shot img { display: block; width: 100%; height: auto; }
+
+    /* sections */
+    section { padding: 96px 0 0; }
+    .kicker { font-family: var(--mono); font-size: 12.5px; color: var(--accent); letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 12px; }
+    h2 { font-family: var(--display); font-weight: 600; font-size: clamp(30px, 4.4vw, 46px); line-height: 1.1; letter-spacing: -.8px; margin: 0 0 16px; max-width: 760px; }
+    .sub { color: var(--muted); max-width: 640px; margin: 0 0 44px; font-size: 17px; }
+
+    .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+    .card { background: var(--bg-2); border: 1px solid var(--line); border-radius: 16px; padding: 24px; transition: border-color .2s; }
+    .card:hover { border-color: #3a404a; }
+    .card .ic { width: 38px; height: 38px; border-radius: 10px; background: var(--bg-3); display: grid; place-items: center; font-size: 18px; margin-bottom: 16px; }
+    .card h3 { margin: 0 0 6px; font-size: 17px; font-weight: 600; }
+    .card p { margin: 0 0 14px; color: var(--muted); font-size: 15px; }
+    .card code { display: block; font-family: var(--mono); font-size: 12.5px; color: #cfcbc2; background: #0c0e11; border-radius: 8px; padding: 9px 11px; border: 1px solid #ffffff08; }
+
+    .loop { display: grid; grid-template-columns: 1.1fr 1fr; gap: 48px; align-items: center; }
+    .steps { list-style: none; margin: 0; padding: 0; counter-reset: s; }
+    .steps li { counter-increment: s; position: relative; padding: 0 0 26px 54px; }
+    .steps li::before { content: counter(s); position: absolute; left: 0; top: -2px; width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--line); display: grid; place-items: center; font-family: var(--mono); font-size: 13px; color: var(--accent); background: var(--bg-2); }
+    .steps li::after { content: ""; position: absolute; left: 17px; top: 36px; bottom: 4px; width: 1px; background: var(--line); }
+    .steps li:last-child::after { display: none; }
+    .steps b { display: block; font-weight: 600; margin-bottom: 2px; }
+    .steps span { color: var(--muted); font-size: 15px; }
+    .loop .shot { margin: 0; }
+
+    .modes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 18px; }
+    .mode { border-radius: 14px; padding: 20px 22px; border: 1px solid var(--line); background: var(--bg-2); }
+    .mode .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 8px; }
+    .mode b { font-size: 16px; }
+    .mode p { color: var(--muted); font-size: 14.5px; margin: 8px 0 0; }
+    .guards { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 32px; list-style: none; padding: 26px 28px; margin: 0; border: 1px solid var(--line); border-radius: 16px; background: linear-gradient(180deg, var(--bg-2), var(--bg)); }
+    .guards li { padding-left: 26px; position: relative; color: #d7d3ca; font-size: 15px; }
+    .guards li::before { content: "✓"; position: absolute; left: 0; color: var(--ok); font-weight: 700; }
+
+    .install { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .term { background: #0c0e11; border: 1px solid var(--line); border-radius: 16px; overflow: hidden; }
+    .term-head { display: flex; justify-content: space-between; align-items: center; padding: 12px 18px; border-bottom: 1px solid var(--line); font-size: 14px; font-weight: 600; }
+    .term-head span { font-weight: 400; color: var(--muted); font-size: 12.5px; font-family: var(--mono); }
+    .term ol { margin: 0; padding: 18px 18px 18px 40px; font-size: 15px; color: #d7d3ca; }
+    .term li { margin-bottom: 9px; }
+    .term li::marker { color: var(--accent); font-family: var(--mono); }
+    .term code { font-family: var(--mono); font-size: 13px; background: var(--bg-3); border-radius: 6px; padding: 1px 6px; color: var(--text); }
+    .req { margin-top: 14px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+    .req div { border: 1px dashed var(--line); border-radius: 14px; padding: 16px 18px; font-size: 14.5px; color: var(--muted); }
+    .req b { color: var(--text); display: block; margin-bottom: 2px; font-weight: 600; }
+
+    .final { margin: 110px 0 0; padding: 64px 32px; text-align: center; border-radius: 24px; border: 1px solid #e8a54b33; background: radial-gradient(ellipse 60% 90% at 50% 0%, #e8a54b22, transparent 70%), var(--bg-2); }
+    .final h2 { margin: 0 auto 14px; }
+    .final p { color: var(--muted); margin: 0 auto 30px; max-width: 520px; }
+
+    footer { padding: 48px 0 40px; color: var(--muted); font-size: 14px; }
+    footer .wrap { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; border-top: 1px solid var(--line); padding-top: 28px; }
+
+    @media (max-width: 900px) {
+      .grid, .modes, .req { grid-template-columns: 1fr 1fr; }
+      .loop, .install { grid-template-columns: 1fr; }
+      nav .links a:not(.btn) { display: none; }
+    }
+    @media (max-width: 600px) {
+      .grid, .modes, .req, .guards { grid-template-columns: 1fr; }
+      .hero { padding-top: 56px; }
+      section { padding-top: 72px; }
+      .final { padding: 44px 20px; }
+      .eyebrow .os { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap">
+    <a class="logo" href="#"><span class="mark"></span>Atlas</a>
+    <div class="links">
+      <a href="#capacites">Capacités</a>
+      <a href="#securite">Sécurité</a>
+      <a href="#installation">Installation</a>
+      <a class="btn btn-primary btn-sm" href="/Atlas-assistant-IA.zip" download>Télécharger</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="wrap">
+    <span class="eyebrow">Propulsé par <b>Claude Opus 5.5</b><span class="os">· Windows, macOS, Linux</span></span>
+    <h1>L'assistant IA qui <em>travaille</em> sur ton PC.</h1>
+    <p class="lead">Atlas ne se contente pas d'expliquer. Il ouvre tes fichiers, lance des commandes, clique dans tes applications et cherche sur le web, jusqu'à ce que le travail soit fait.</p>
+    <div class="cta">
+      <a class="btn btn-primary" href="/Atlas-assistant-IA.zip" download>↓ Télécharger Atlas</a>
+      <a class="btn btn-ghost" href="#installation">Comment l'installer</a>
+    </div>
+    <p class="note">Gratuit · 64 Ko · nécessite une clé API Anthropic</p>
+    <div class="shot">
+      <div class="shot-bar"><i></i><i></i><i></i></div>
+      <img src="/apercu-accueil.webp" alt="Écran d'accueil d'Atlas : « Que veux-tu que je fasse ? » avec des suggestions de tâches" width="1400" height="900">
+    </div>
+  </div>
+</header>
+
+<section id="capacites">
+  <div class="wrap">
+    <div class="kicker">Capacités</div>
+    <h2>Tout ce que tu fais sur ton ordinateur, il peut le faire.</h2>
+    <p class="sub">Tu lui parles comme à un collègue. Il choisit le bon outil, agit, vérifie le résultat et recommence si ce n'est pas bon.</p>
+    <div class="grid">
+      <div class="card"><div class="ic">⌘</div><h3>Terminal</h3><p>Installe des logiciels, lance des scripts, gère git, démarre tes serveurs.</p><code>« Crée un projet Next.js et lance-le »</code></div>
+      <div class="card"><div class="ic">✎</div><h3>Fichiers</h3><p>Lit, crée, modifie, renomme et range. Chaque modification est sauvegardée avant.</p><code>« Range mes Téléchargements par type »</code></div>
+      <div class="card"><div class="ic">🔎</div><h3>Recherche</h3><p>Retrouve un fichier par son nom ou par ce qu'il contient, partout sur le disque.</p><code>« Où est le contrat signé en mars ? »</code></div>
+      <div class="card"><div class="ic">📄</div><h3>Documents</h3><p>Comprend les PDF, Word, Excel, PowerPoint et les images.</p><code>« Résume ce rapport en 10 points »</code></div>
+      <div class="card"><div class="ic">🖱</div><h3>Écran</h3><p>Voit ton écran, bouge la souris et tape au clavier dans n'importe quelle application.</p><code>« Remplis ce formulaire dans l'appli »</code></div>
+      <div class="card"><div class="ic">🌐</div><h3>Web</h3><p>Cherche l'information à jour et lit les pages, avec les sources.</p><code>« Quoi de neuf dans Next.js ce mois-ci ? »</code></div>
+      <div class="card"><div class="ic">🔌</div><h3>Tes applications</h3><p>Se connecte à GitHub, Notion, Slack, Supabase… grâce au standard ouvert MCP.</p><code>« Connecte-toi à mon GitHub »</code></div>
+      <div class="card"><div class="ic">◎</div><h3>Mémoire</h3><p>Retient tes préférences et tes projets d'une conversation à l'autre.</p><code>« Retiens que mes projets sont dans D:\Projets »</code></div>
+      <div class="card"><div class="ic">↻</div><h3>Persévérance</h3><p>Vérifie chaque étape et change d'approche quand quelque chose bloque.</p><code>« Corrige le build jusqu'à ce qu'il passe »</code></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap loop">
+    <div>
+      <div class="kicker">Comment il travaille</div>
+      <h2>Il agit, puis il vérifie.</h2>
+      <p class="sub">Une vraie boucle de travail, pas une simple réponse.</p>
+      <ol class="steps">
+        <li><b>Il comprend l'objectif</b><span>Il ne pose une question que si une information indispensable manque.</span></li>
+        <li><b>Il choisit le bon outil</b><span>Le terminal pour les fichiers, l'écran pour les interfaces, le web pour l'actualité.</span></li>
+        <li><b>Il agit et contrôle</b><span>Il relit le fichier, relance le programme, prend une capture d'écran.</span></li>
+        <li><b>Il te rend compte</b><span>Ce qui a été fait, où se trouve le résultat, ce qui reste à faire.</span></li>
+      </ol>
+    </div>
+    <div class="shot">
+      <div class="shot-bar"><i></i><i></i><i></i></div>
+      <img src="/apercu-conversation.webp" alt="Atlas exécute une commande, puis demande l'autorisation avant de supprimer un dossier" width="1400" height="900" loading="lazy">
+    </div>
+  </div>
+</section>
+
+<section id="securite">
+  <div class="wrap">
+    <div class="kicker">Sécurité</div>
+    <h2>Tu gardes la main, toujours.</h2>
+    <p class="sub">Tu choisis jusqu'où il peut aller seul. Pour le reste, il te demande la permission, et tu peux l'arrêter à tout instant.</p>
+    <div class="modes">
+      <div class="mode"><span class="dot" style="background:var(--ok)"></span><b>Prudent</b><p>Demande avant chaque commande, modification ou clic.</p></div>
+      <div class="mode"><span class="dot" style="background:var(--accent)"></span><b>Équilibré</b><p>Agit librement, mais demande pour les suppressions, les envois et tout ce qui touche au système.</p></div>
+      <div class="mode"><span class="dot" style="background:var(--bad)"></span><b>Autonome</b><p>Ne t'interrompt que pour les actions catastrophiques.</p></div>
+    </div>
+    <ul class="guards">
+      <li>Bouton Stop, ou souris dans un coin de l'écran : arrêt immédiat</li>
+      <li>Chaque fichier modifié est sauvegardé avant</li>
+      <li>Les suppressions passent par la corbeille</li>
+      <li>Interface accessible depuis ton PC uniquement, avec un jeton secret</li>
+      <li>Les consignes cachées dans une page web ou un e-mail sont ignorées</li>
+      <li>Il ne saisit jamais tes mots de passe ni tes codes bancaires</li>
+    </ul>
+  </div>
+</section>
+
+<section id="installation">
+  <div class="wrap">
+    <div class="kicker">Installation</div>
+    <h2>Prêt en cinq minutes.</h2>
+    <p class="sub">Atlas tourne sur ton ordinateur. Tes fichiers ne quittent ta machine que pour ce qu'il doit faire, envoyés à l'API d'Anthropic.</p>
+    <div class="install">
+      <div class="term">
+        <div class="term-head">Windows <span>double-clic</span></div>
+        <ol>
+          <li>Décompresse <code>Atlas-assistant-IA.zip</code></li>
+          <li>Lance <code>installer_windows.bat</code></li>
+          <li>Lance <code>demarrer_windows.bat</code> : le navigateur s'ouvre</li>
+          <li>Colle ta clé API dans ⚙ Réglages</li>
+        </ol>
+      </div>
+      <div class="term">
+        <div class="term-head">macOS · Linux <span>terminal</span></div>
+        <ol>
+          <li>Décompresse l'archive</li>
+          <li><code>./installer.sh</code></li>
+          <li><code>./demarrer.sh</code></li>
+          <li>macOS : autorise Accessibilité et Enregistrement de l'écran</li>
+        </ol>
+      </div>
+    </div>
+    <div class="req">
+      <div><b>Python 3.10+</b>python.org, en cochant « Add to PATH » sous Windows</div>
+      <div><b>Clé API Anthropic</b>console.anthropic.com, facturation à l'usage</div>
+      <div><b>Node.js (conseillé)</b>Pour connecter tes applications via MCP</div>
+    </div>
+  </div>
+</section>
+
+<div class="wrap">
+  <div class="final">
+    <h2>Donne-lui ta première tâche.</h2>
+    <p>Télécharge Atlas, installe-le, et demande-lui quelque chose que tu repousses depuis longtemps.</p>
+    <a class="btn btn-primary" href="/Atlas-assistant-IA.zip" download>↓ Télécharger Atlas</a>
+  </div>
+</div>
+
+<footer>
+  <div class="wrap">
+    <span>Atlas · conçu par Lionel ALIMAGNIDOKPO, Cotonou</span>
+    <span>Utilise l'API Claude d'Anthropic. Projet indépendant, non affilié à Anthropic.</span>
+  </div>
+</footer>
+
+</body>
+</html>
