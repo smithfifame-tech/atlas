@@ -12,12 +12,15 @@ from typing import Any, Awaitable, Callable
 
 from . import safety
 from .api import APIError, stream_message
+from .providers import (ALT_NOTE, Provider, build_chain, complete_ollama, complete_openai,
+                        sanitize_for_anthropic)
 from .config import CONV_DIR, load_settings
 from .prompt import build_system_prompt
 from .tools import ToolResult
 from .tools import computer as computer_mod
 from .tools.connectors import manager
-from .tools.registry import build_tools, dispatch
+from .tools.registry import CUSTOM_TOOLS, build_tools, dispatch
+from .tools.web import LOCAL_WEB_TOOLS
 
 Emit = Callable[[dict], Awaitable[None]]
 AskApproval = Callable[[dict], Awaitable[dict]]
@@ -114,6 +117,8 @@ class Agent:
         self.settings = load_settings()
         self.computer: computer_mod.Computer | None = None
         self._pending: list[dict] | None = None
+        self.chain: list[Provider] = []
+        self.provider_idx = 0
 
     # ---------- préparation
     def _prepare(self) -> None:
@@ -128,8 +133,11 @@ class Agent:
         if any(t.get("type", "").startswith("computer_") for t in conv.tools):
             self.computer = computer_mod.Computer(int(self.settings.get("screenshot_max_width", 1366)))
 
+    def _allowed_names(self) -> set[str]:
+        return {t["name"] for t in self.conv.tools if t.get("name")}
+
     def _payload(self) -> dict:
-        messages = self.conv.messages
+        messages = sanitize_for_anthropic(self.conv.messages, self._allowed_names())
         if messages and messages[-1]["role"] == "user":
             last = copy.copy(messages[-1])
             content = last["content"]
@@ -154,9 +162,13 @@ class Agent:
     async def run(self, user_content: list[dict]) -> None:
         conv = self.conv
         self._prepare()
-        if not self.settings.get("api_key"):
-            await self.emit({"type": "error", "message": "Aucune clé API : ajoute-la dans les Réglages (⚙)."})
+        self.chain, skipped = build_chain(self.settings)
+        if not self.chain:
+            detail = f" ({', '.join(skipped)})" if skipped else ""
+            await self.emit({"type": "error", "message": "Aucun modèle utilisable : ajoute ta clé API Anthropic "
+                             f"ou active un autre modèle dans Réglages → Modèles{detail}."})
             return
+        await self.emit({"type": "provider", "name": self.chain[0].display})
         if not conv.messages:
             first_text = next((b.get("text", "") for b in user_content if b.get("type") == "text"), "")
             conv.title = (first_text.strip().splitlines() or ["Nouvelle conversation"])[0][:70] or "Nouvelle conversation"
@@ -205,8 +217,7 @@ class Agent:
         max_steps = int(self.settings.get("max_steps", 150))
         for step in range(max_steps):
             await self.emit({"type": "status", "message": "Réflexion…" if step == 0 else "Je continue…"})
-            message = await stream_message(api_key=self.settings["api_key"], payload=self._payload(),
-                                           on_event=self._on_stream_event)
+            message = await self._complete()
             for key in conv.usage:
                 conv.usage[key] += int((message.get("usage") or {}).get(key) or 0)
             await self.emit({"type": "usage", "usage": conv.usage})
@@ -246,6 +257,31 @@ class Agent:
         msg = f"Limite de {max_steps} étapes atteinte. Dis « continue » pour poursuivre."
         conv.log({"kind": "notice", "text": msg})
         await self.emit({"type": "notice", "level": "warn", "message": msg})
+
+    async def _complete(self) -> dict:
+        """Appelle le modèle courant ; en cas d'échec, bascule sur le suivant de la liste."""
+        last_error: APIError | None = None
+        while self.provider_idx < len(self.chain):
+            p = self.chain[self.provider_idx]
+            try:
+                if p.kind == "anthropic":
+                    return await stream_message(api_key=p.api_key, payload=self._payload(),
+                                                on_event=self._on_stream_event)
+                allowed = {"str_replace_based_edit_tool"} | {t["name"] for t in CUSTOM_TOOLS + LOCAL_WEB_TOOLS}
+                system = self.conv.system + ALT_NOTE.format(label=p.label, model=p.model or "auto")
+                fn = complete_ollama if p.kind == "ollama" else complete_openai
+                return await fn(p, system, self.conv.messages, CUSTOM_TOOLS + LOCAL_WEB_TOOLS,
+                                self._on_stream_event, allowed)
+            except APIError as err:
+                last_error = err
+                self.provider_idx += 1
+                if self.provider_idx < len(self.chain):
+                    nxt = self.chain[self.provider_idx]
+                    msg = f"{p.label} indisponible ({err.message[:160]}). Je continue avec {nxt.display}."
+                    self.conv.log({"kind": "notice", "text": msg})
+                    await self.emit({"type": "notice", "level": "warn", "message": msg})
+                    await self.emit({"type": "provider", "name": nxt.display})
+        raise last_error or APIError(0, "Aucun modèle disponible.")
 
     async def _on_stream_event(self, ev: dict) -> None:
         etype = ev["type"]

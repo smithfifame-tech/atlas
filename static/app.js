@@ -351,6 +351,10 @@
         if (n) n.classList.add("done");
         break;
       }
+      case "provider":
+        $("convMeta").dataset.provider = ev.name;
+        setStatus(`Modèle : ${ev.name}`);
+        break;
       case "usage":
         $("convMeta").textContent = fmtTokens(ev.usage);
         break;
@@ -570,6 +574,8 @@
     $("sCountry").value = st.location_country || "";
     $("sCity").value = st.location_city || "";
     $("sInstr").value = st.custom_instructions || "";
+    renderProviders(st.providers || {});
+    loadOllamaModels();
     const mem = await api("/api/memory");
     $("sMemory").value = mem.text;
     const conn = await api("/api/connectors");
@@ -577,6 +583,73 @@
     renderConnStatus(conn.servers);
     $("connMsg").textContent = "";
     $("settingsModal").classList.remove("hidden");
+  }
+
+  const PROV_LINKS = {
+    deepseek: "Clé sur platform.deepseek.com", openrouter: "Clé sur openrouter.ai/keys",
+    groq: "Clé gratuite sur console.groq.com", custom: "Ex. LM Studio : http://127.0.0.1:1234/v1",
+  };
+
+  function renderProviders(provs) {
+    const list = $("provList");
+    list.innerHTML = "";
+    Object.entries(provs).sort((a, b) => (a[1].priority || 99) - (b[1].priority || 99)).forEach(([pid, p]) => {
+      const card = el("div", "prov" + (p.enabled ? "" : " off"));
+      card.dataset.pid = pid;
+      const head = el("div", "prov-head");
+      const en = el("input"); en.type = "checkbox"; en.checked = !!p.enabled; en.dataset.k = "enabled";
+      en.onchange = () => card.classList.toggle("off", !en.checked);
+      const pr = el("input"); pr.type = "number"; pr.min = 1; pr.max = 99; pr.value = p.priority || 9; pr.dataset.k = "priority";
+      pr.title = "Priorité (1 = en premier)";
+      head.append(en, el("b", "", p.label), el("span", "muted small", "priorité"), pr);
+      card.append(head);
+      const body = el("div", "prov-body");
+      const field = (label, key, value, placeholder, type) => {
+        const l = el("label", "field"); l.append(el("span", "", label));
+        const i = el("input"); i.dataset.k = key; i.value = value || ""; i.placeholder = placeholder || "";
+        if (type) i.type = type;
+        if (key === "model" && pid === "ollama") i.setAttribute("list", "ollamaModels");
+        l.append(i); body.append(l);
+      };
+      if (pid === "anthropic") {
+        card.append(el("div", "prov-note", "Clé API et modèle Claude : onglet Général."));
+      } else {
+        if (p.needs_key || pid === "custom") field("Clé API", "api_key", "", p.api_key_set ? `Enregistrée (${p.api_key_hint}) — vide = garder` : "Colle ta clé", "password");
+        field("Modèle", "model", p.model, p.default_model || (pid === "ollama" ? "Automatique (1er modèle installé)" : "nom du modèle"));
+        if (pid === "custom" || pid === "ollama") field("Adresse du service", "base_url", p.base_url, p.default_base_url || "https://…/v1");
+        card.append(body);
+        if (PROV_LINKS[pid]) card.append(el("div", "prov-note", PROV_LINKS[pid]));
+        if (pid === "ollama") { const n = el("div", "prov-note", "Vérification d'Ollama…"); n.id = "ollamaNote"; card.append(n); }
+      }
+      list.append(card);
+    });
+  }
+
+  async function loadOllamaModels() {
+    try {
+      const r = await api("/api/ollama/models");
+      const dl = $("ollamaModels"); dl.innerHTML = "";
+      r.models.forEach((m) => { const o = el("option"); o.value = m; dl.append(o); });
+      const note = $("ollamaNote");
+      if (note) note.textContent = r.running
+        ? (r.models.length ? `Ollama est lancé · modèles installés : ${r.models.join(", ")}` : "Ollama est lancé mais aucun modèle n'est installé (ex. : ollama pull qwen2.5:7b).")
+        : "Ollama n'est pas lancé sur ce PC : ouvre l'application Ollama pour utiliser ce mode gratuit.";
+    } catch (e) {}
+  }
+
+  function collectProviders() {
+    const out = {};
+    document.querySelectorAll("#provList .prov").forEach((card) => {
+      const entry = {};
+      card.querySelectorAll("[data-k]").forEach((i) => {
+        const k = i.dataset.k;
+        if (i.type === "checkbox") entry[k] = i.checked;
+        else if (k === "priority") entry[k] = parseInt(i.value, 10) || 9;
+        else entry[k] = i.value.trim();
+      });
+      out[card.dataset.pid] = entry;
+    });
+    return out;
   }
 
   function renderConnStatus(servers) {
@@ -604,6 +677,7 @@
         screenshot_max_width: $("sShotW").value || 1366, max_steps: $("sSteps").value || 150,
         location_country: $("sCountry").value.trim().toUpperCase(), location_city: $("sCity").value.trim(),
         custom_instructions: $("sInstr").value,
+        providers: collectProviders(),
       };
       if ($("sKey").value.trim()) body.api_key = $("sKey").value.trim();
       applySettings(await api("/api/settings", { method: "POST", body: JSON.stringify(body) }));

@@ -79,6 +79,7 @@
     </div>
     <nav class="tabs" id="tabs">
       <button data-tab="general" class="active">Général</button>
+      <button data-tab="models">Modèles</button>
       <button data-tab="instructions">Instructions</button>
       <button data-tab="memory">Mémoire</button>
       <button data-tab="connectors">Connecteurs</button>
@@ -108,6 +109,11 @@
           <label class="field"><span>Ville</span><input id="sCity"></label>
         </div>
         <p class="muted small">Le modèle, les outils et les instructions s'appliquent aux <b>nouvelles</b> conversations. Le mode d'autorisation s'applique tout de suite.</p>
+      </section>
+      <section data-panel="models" class="panel">
+        <p class="muted small">Atlas essaie les modèles activés dans l'ordre de priorité (1 = en premier). Si l'un échoue (plus de crédit, coupure, service en panne), il passe automatiquement au suivant. Seul Claude contrôle l'écran ; les autres gardent le terminal, les fichiers, le web et les connecteurs.</p>
+        <div id="provList"></div>
+        <datalist id="ollamaModels"></datalist>
       </section>
       <section data-panel="instructions" class="panel">
         <p class="muted small">Ce que l'assistant doit toujours savoir ou respecter (ton métier, tes projets, ton style…).</p>

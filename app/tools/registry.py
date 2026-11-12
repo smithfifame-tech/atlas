@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from ..config import IS_WINDOWS
-from . import ToolResult, system
+from . import ToolResult, system, web
 from .connectors import manager
 from .memory import memory_tool
 
@@ -230,4 +230,8 @@ async def dispatch(name: str, inp: dict, cwd: str) -> ToolResult:
         return await manager.call(clean)
     if name == "manage_connectors":
         return await manager.manage(inp)
+    if name == "web_search_local":
+        return await web.web_search_local(inp)
+    if name == "fetch_url":
+        return await web.fetch_url(inp)
     return ToolResult.error(f"Outil inconnu : {name}")

@@ -15,7 +15,8 @@ from fastapi.staticfiles import StaticFiles
 from . import __version__
 from .agent import Agent, Conversation, list_conversations, user_content_from
 from .config import (APPROVAL_MODES, CONV_DIR, MCP_CONFIG_FILE, MEMORY_FILE, MODELS, STATIC_DIR,
-                     get_access_token, load_settings, public_settings, save_settings, system_info)
+                     get_access_token, load_settings, merge_provider_updates, public_settings, save_settings,
+                     system_info)
 from .tools import computer as computer_mod
 from .tools.connectors import manager
 
@@ -172,6 +173,8 @@ async def update_settings(request: Request):
     for key in ("max_tokens", "max_steps", "screenshot_max_width"):
         if key in body:
             body[key] = int(body[key])
+    if "providers" in body:
+        body["providers"] = merge_provider_updates(load_settings().get("providers") or {}, body["providers"])
     if body.get("model") and body["model"] not in MODELS and not str(body["model"]).startswith("claude-"):
         raise HTTPException(400, "Modèle inconnu")
     return public_settings(save_settings(body))
@@ -198,6 +201,17 @@ async def delete_conversation(conv_id: str):
     hub.runtimes.pop(conv_id, None)
     (CONV_DIR / f"{conv_id}.json").unlink(missing_ok=True)
     return {"ok": True}
+
+
+@app.get("/api/ollama/models", dependencies=[Depends(require_token)])
+async def get_ollama_models():
+    from .providers import merged_providers, ollama_models
+
+    base = merged_providers(load_settings())["ollama"].get("base_url") or ""
+    try:
+        return {"running": True, "models": await ollama_models(base)}
+    except Exception as exc:  # noqa: BLE001
+        return {"running": False, "models": [], "error": str(exc)}
 
 
 @app.get("/api/memory", dependencies=[Depends(require_token)])

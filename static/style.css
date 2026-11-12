@@ -185,6 +185,15 @@ details.thinking .body-t { white-space: pre-wrap; margin-top: 6px; }
 .conn-status .err { color: var(--bad); font-size: 12px; }
 .row-actions { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
 
+.prov { border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; margin-bottom: 10px; background: var(--bg); }
+.prov.off { opacity: .6; }
+.prov-head { display: flex; align-items: center; gap: 10px; font-size: 14px; }
+.prov-head b { flex: 1; }
+.prov-head input[type=checkbox] { accent-color: var(--accent); width: 16px; height: 16px; }
+.prov-head input[type=number] { width: 58px; background: var(--bg-2); border: 1px solid var(--line); border-radius: 7px; padding: 4px 6px; }
+.prov-body { display: grid; grid-template-columns: 1fr 1fr; gap: 0 12px; margin-top: 10px; }
+.prov-body .field { margin-bottom: 6px; }
+.prov-note { font-size: 12px; color: var(--muted); margin-top: 6px; }
 @keyframes spin { to { transform: rotate(360deg); } }
 @keyframes pulse { 50% { opacity: .35; } }
 
@@ -194,7 +203,7 @@ details.thinking .body-t { white-space: pre-wrap; margin-top: 6px; }
   .sidebar.open { transform: none; }
   .only-mobile { display: inline-block; }
   .screen-panel { position: fixed; inset: 0; width: auto; z-index: 30; }
-  .suggestions, .grid2, .toggles { grid-template-columns: 1fr; }
+  .suggestions, .grid2, .toggles, .prov-body { grid-template-columns: 1fr; }
   .chat, .composer-wrap, .topbar { padding-left: 14px; padding-right: 14px; }
   .msg-user { max-width: 92%; }
 }

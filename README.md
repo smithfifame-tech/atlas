@@ -116,7 +116,23 @@ Ce qui consomme le plus :
 
 Le compteur de jetons de la conversation s'affiche sous son titre. Fixe une limite de dépenses dans la console Anthropic (*Settings → Limits*).
 
-## 6. Personnaliser
+## 6. Plusieurs cerveaux : Atlas ne dépend pas d'un seul fournisseur
+
+Dans **Réglages → Modèles**, active les modèles que tu veux et donne-leur une priorité (1 = en premier).
+Atlas essaie le premier ; s'il échoue (plus de crédit, panne, coupure), il **bascule automatiquement** sur le suivant, sans perdre la conversation.
+
+| Modèle | Coût | Remarques |
+|---|---|---|
+| **Claude** (Anthropic) | Payant à l'usage | Le plus performant ; seul à contrôler l'écran. |
+| **DeepSeek** | Très peu cher | Excellent en code. Clé sur platform.deepseek.com. |
+| **OpenRouter** | Variable (certains modèles gratuits) | Des centaines de modèles avec une seule clé. |
+| **Groq** | Offre gratuite limitée | Très rapide. Clé sur console.groq.com. |
+| **Ollama** | **Gratuit, 100 % sur ton PC** | Installe Ollama puis un modèle compatible outils, ex. `ollama pull qwen2.5:7b`. Plus lent et moins capable. |
+| **Autre service compatible OpenAI** | — | LM Studio, vLLM, etc. (adresse `…/v1`). |
+
+Sans Claude, Atlas garde le terminal, les fichiers, les documents, les connecteurs et la mémoire, et passe par ses propres outils `web_search_local` / `fetch_url` pour Internet.
+
+## 7. Personnaliser
 
 - **Réglages → Instructions** : ce qu'il doit toujours savoir (ton métier, tes dossiers, ton style de réponse…).
 - **Réglages → Mémoire** : ce qu'il a retenu ; modifiable librement.
@@ -126,7 +142,7 @@ Le compteur de jetons de la conversation s'affiche sous son titre. Fixe une limi
 
 Le modèle, les outils et les instructions sont figés au début de chaque conversation (l'API l'exige). Les changements s'appliquent donc aux **nouvelles** conversations. Le mode d'autorisation, lui, s'applique tout de suite.
 
-## 7. Dépannage
+## 8. Dépannage
 
 | Problème | Solution |
 |---|---|
@@ -138,7 +154,7 @@ Le modèle, les outils et les instructions sont figés au début de chaque conve
 | Un connecteur reste en « erreur » | Lis `data/logs/mcp_<nom>.log` ; vérifie que Node.js est installé pour `npx`. |
 | L'antivirus bloque | `pyautogui` (contrôle souris/clavier) peut être signalé à tort : ajoute une exception pour le dossier. |
 
-## 8. Structure du projet
+## 9. Structure du projet
 
 ```
 app/
@@ -146,6 +162,7 @@ app/
   server.py        serveur local (interface + temps réel)
   agent.py         boucle d'agent : Claude ↔ outils
   api.py           client de l'API Anthropic (streaming)
+  providers.py     autres modèles (OpenAI-compatibles, Ollama) et bascule automatique
   prompt.py        instructions système
   safety.py        règles d'autorisation
   tools/
@@ -153,6 +170,7 @@ app/
     computer.py    écran, souris, clavier
     connectors.py  connecteurs MCP
     memory.py      mémoire durable
+    web.py         recherche et lecture web pour les modèles autres que Claude
     registry.py    liste des outils envoyée au modèle
 static/            interface (HTML / CSS / JS)
 config/mcp_servers.json   tes connecteurs

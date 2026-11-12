@@ -64,6 +64,7 @@ DEFAULTS: dict = {
     "location_city": "",
     "location_timezone": "",
     "port": 8765,
+    "providers": {},
 }
 
 _lock = threading.Lock()
@@ -109,13 +110,46 @@ def save_settings(updates: dict) -> dict:
     return load_settings()
 
 
+def _hint(key: str) -> str:
+    return f"…{key[-4:]}" if key else ""
+
+
 def public_settings(settings: dict) -> dict:
-    """Réglages envoyés à l'interface (la clé API est masquée)."""
+    """Réglages envoyés à l'interface (les clés API sont masquées)."""
+    from .providers import PRESETS, merged_providers
+
     out = dict(settings)
     key = out.pop("api_key", "")
     out["api_key_set"] = bool(key)
-    out["api_key_hint"] = f"…{key[-4:]}" if key else ""
+    out["api_key_hint"] = _hint(key)
+    providers = {}
+    for pid, cfg in merged_providers(settings).items():
+        cfg = dict(cfg)
+        k = cfg.pop("api_key", "")
+        cfg.update({"api_key_set": bool(k), "api_key_hint": _hint(k), "label": PRESETS[pid]["label"],
+                    "default_model": PRESETS[pid]["default_model"], "needs_key": PRESETS[pid]["needs_key"],
+                    "default_base_url": PRESETS[pid]["base_url"]})
+        providers[pid] = cfg
+    out["providers"] = providers
     return out
+
+
+def merge_provider_updates(current: dict, updates: dict) -> dict:
+    """Fusionne les réglages des modèles ; un champ de clé laissé vide garde l'ancienne clé."""
+    from .providers import DEFAULT_PROVIDERS
+
+    merged = {pid: dict(cfg) for pid, cfg in (current or {}).items()}
+    for pid, upd in (updates or {}).items():
+        if pid not in DEFAULT_PROVIDERS or not isinstance(upd, dict):
+            continue
+        entry = merged.setdefault(pid, {})
+        for k in ("enabled", "priority", "api_key", "model", "base_url", "vision", "num_ctx", "max_tokens"):
+            if k not in upd:
+                continue
+            if k == "api_key" and not str(upd[k]).strip():
+                continue
+            entry[k] = upd[k]
+    return merged
 
 
 def get_access_token() -> str:
