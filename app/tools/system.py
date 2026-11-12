@@ -441,7 +441,7 @@ def _read_document_sync(inp: dict, cwd: str) -> ToolResult:
             try:
                 from pptx import Presentation
             except ImportError:
-                return ToolResult.error("Installe python-pptx pour lire les présentations.")
+                return ToolResult.error("Lecture des .pptx : installe le module avec  .venv\\Scripts\\pip install python-pptx  (facultatif).")
             prs = Presentation(str(path))
             parts = []
             for i, slide in enumerate(prs.slides, 1):
